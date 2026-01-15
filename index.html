@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TRAFFLOW – Smart Traffic Control Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root {
+  --bg:#0b1220;
+  --card:#111827;
+  --panel:#020617;
+  --border:#1f2933;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+  --green:#22c55e;
+  --yellow:#facc15;
+  --red:#ef4444;
+  --accent:#38bdf8;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,Arial,sans-serif;
+  background:radial-gradient(1200px 600px at top,#0f172a,#020617);
+  color:var(--text);
+}
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:18px 24px;
+  border-bottom:1px solid var(--border);
+}
+header h1{margin:0;font-size:26px}
+header span{color:var(--muted);font-size:14px}
+.live{
+  display:flex;align-items:center;gap:8px;color:var(--green)
+}
+.dot{
+  width:10px;height:10px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 8px var(--green)
+}
+main{
+  padding:24px;
+  display:grid;
+  gap:24px;
+}
+.card{
+  background:linear-gradient(180deg,#0f172a,#020617);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:20px;
+}
+.overview{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:16px;
+}
+.stat{
+  background:var(--card);
+  border-radius:14px;
+  padding:18px;
+}
+.stat h3{margin:0 0 8px;color:var(--muted);font-size:14px}
+.stat .big{font-size:34px;font-weight:700}
+.queues{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px;
+}
+.queue{
+  background:var(--card);
+  border-radius:14px;
+  padding:18px;
+}
+.queue h4{margin:0;color:var(--muted)}
+.queue .count{
+  font-size:36px;
+  font-weight:700;
+  margin:10px 0;
+}
+.green{color:var(--green)}
+.yellow{color:var(--yellow)}
+.red{color:var(--red)}
+.intersection{
+  height:300px;
+  background:var(--panel);
+  border-radius:14px;
+  position:relative;
+}
+.road-h,.road-v{
+  position:absolute;background:#1f2933;
+}
+.road-h{top:50%;left:0;right:0;height:60px;transform:translateY(-50%)}
+.road-v{left:50%;top:0;bottom:0;width:60px;transform:translateX(-50%)}
+.center-dot{
+  position:absolute;top:50%;left:50%;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--green);transform:translate(-50%,-50%);
+  box-shadow:0 0 10px var(--green)
+}
+.label{
+  position:absolute;
+  background:rgba(255,255,255,0.06);
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:13px;
+}
+.a{top:10px;left:50%;transform:translateX(-50%)}
+.b{right:10px;top:50%;transform:translateY(-50%)}
+.c{bottom:10px;left:50%;transform:translateX(-50%)}
+.d{left:10px;top:50%;transform:translateY(-50%)}
+.signal{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:24px;
+}
+.circle{
+  width:120px;height:120px;border-radius:50%;
+  border:8px solid var(--green);
+  display:flex;align-items:center;justify-content:center;
+  font-size:38px;font-weight:700;color:var(--green)
+}
+.serving{
+  display:flex;gap:10px;flex-wrap:wrap
+}
+.lane{
+  padding:8px 16px;border-radius:999px;
+  background:#1f2933;color:var(--muted);font-weight:600
+}
+.lane.active{
+  background:var(--green);color:#020617
+}
+.controls{
+  border:2px dashed #1f2933;
+  padding:18px;border-radius:16px
+}
+button{
+  padding:14px 18px;
+  border:none;border-radius:12px;
+  font-weight:700;cursor:pointer
+}
+.primary{background:var(--green);color:#020617}
+.secondary{background:#f59e0b;color:#020617}
+@media(max-width:768px){
+  .intersection{height:220px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div>
+    <h1>TRAFFLOW</h1>
+    <span>Smart Traffic Control Dashboard</span>
+  </div>
+  <div class="live"><div class="dot"></div>Live</div>
+</header>
+
+<main>
+
+<section class="card overview">
+  <div class="stat">
+    <h3>Traffic Status</h3>
+    <div id="status" class="big green">Smooth</div>
+  </div>
+  <div class="stat">
+    <h3>Avg Waiting Time</h3>
+    <div id="avgWait" class="big">0 s</div>
+  </div>
+  <div class="stat">
+    <h3>Congestion Level</h3>
+    <div id="congestion" class="big">0%</div>
+  </div>
+</section>
+
+<section class="card">
+  <h3>Live Intersection View</h3>
+  <div class="intersection">
+    <div class="road-h"></div>
+    <div class="road-v"></div>
+    <div class="center-dot"></div>
+    <div class="label a">A North</div>
+    <div class="label b">B East</div>
+    <div class="label c">C South</div>
+    <div class="label d">D West</div>
+  </div>
+</section>
+
+<section class="card queues">
+  <div class="queue"><h4>Approach A</h4><div id="qA" class="count green">0</div></div>
+  <div class="queue"><h4>Approach B</h4><div id="qB" class="count yellow">0</div></div>
+  <div class="queue"><h4>Approach C</h4><div id="qC" class="count green">0</div></div>
+  <div class="queue"><h4>Approach D</h4><div id="qD" class="count green">0</div></div>
+</section>
+
+<section class="card signal">
+  <div>
+    <h4>Current Phase</h4>
+    <div id="phase" class="circle">1</div>
+  </div>
+  <div>
+    <h4>Time Remaining</h4>
+    <div id="time" class="circle">20</div>
+  </div>
+  <div>
+    <h4>Serving</h4>
+    <div class="serving">
+      <div id="laneA" class="lane">A</div>
+      <div id="laneB" class="lane">B</div>
+      <div id="laneC" class="lane">C</div>
+      <div id="laneD" class="lane">D</div>
+    </div>
+    <p id="reason" style="color:var(--muted);margin-top:10px"></p>
+  </div>
+</section>
+
+<section class="controls">
+  <h3>Demo Mode</h3>
+  <button class="primary" onclick="toggleMode()">Toggle Fixed / Adaptive</button>
+  <button class="secondary" onclick="simulateSurge()">Simulate Traffic Surge</button>
+  <p>Mode: <b id="mode">Adaptive</b></p>
+</section>
+
+</main>
+
+<script>
+let mode="Adaptive",phase=1,time=20;
+
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+
+function update(){
+  let A=rand(2,14),B=rand(2,10),C=rand(1,12),D=rand(1,8);
+  qA.textContent=A;qB.textContent=B;qC.textContent=C;qD.textContent=D;
+
+  let avg=Math.round((A+B+C+D)/4);
+  avgWait.textContent=avg+" s";
+  congestion.textContent=Math.min(100,avg*3)+"%";
+
+  let total=A+B+C+D;
+  let s=total>30?"Congested":total>18?"Moderate":"Smooth";
+  status.textContent=s;
+  status.className="big "+(s==="Smooth"?"green":s==="Moderate"?"yellow":"red");
+
+  document.querySelectorAll(".lane").forEach(l=>l.classList.remove("active"));
+
+  if(mode==="Fixed"||A+C>=B+D){
+    phase=1;
+    laneA.classList.add("active");laneC.classList.add("active");
+    reason.textContent="North–South corridor has higher queue density";
+  }else{
+    phase=2;
+    laneB.classList.add("active");laneD.classList.add("active");
+    reason.textContent="East–West corridor clearing accumulated vehicles";
+  }
+  document.getElementById("phase").textContent=phase;
+}
+
+setInterval(()=>{time--;if(time<=0)time=20;document.getElementById("time").textContent=time},1000);
+setInterval(update,3000);update();
+
+function toggleMode(){
+  mode=mode==="Adaptive"?"Fixed":"Adaptive";
+  document.getElementById("mode").textContent=mode;
+}
+function simulateSurge(){
+  qB.textContent=20;
+  status.textContent="Congested";
+  status.className="big red";
+}
+</script>
+
+</body>
+</html>
